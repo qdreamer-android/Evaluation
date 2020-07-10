@@ -145,9 +145,9 @@ mEvaluation.cancelEvaluation()
 mEvaluation.release()
 ```
 
-[单词评测结果](eval_result_word.png)
+![单词评测结果](eval_result_word.png)
 
-[句子评测结果](eval_result_sent.png)
+![句子评测结果](eval_result_sent.png)
 
 
 #### 三. MQTT 通信服务的使用:
