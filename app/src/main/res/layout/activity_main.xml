@@ -11,19 +11,19 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/colorPrimary"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:gravity="center"
             android:layout_gravity="center"
+            android:gravity="center"
             android:text="口语评测"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
     </androidx.appcompat.widget.Toolbar>
 
@@ -31,14 +31,15 @@
         android:id="@+id/editEval"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="80dp"
         android:layout_marginStart="36dp"
+        android:layout_marginTop="80dp"
         android:layout_marginEnd="36dp"
-        android:padding="16dp"
-        android:inputType="text"
+        android:background="@drawable/shape_round10_stroke1_black"
         android:digits="@string/eval_limit"
         android:hint="请输入准备评测的单词或句子"
-        android:background="@drawable/shape_round10_stroke1_black"
+        android:inputType="text"
+        android:padding="16dp"
+        android:textSize="14sp"
         app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
     <Button
@@ -46,14 +47,14 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginStart="96dp"
-        android:layout_marginEnd="96dp"
         android:layout_marginTop="48dp"
+        android:layout_marginEnd="96dp"
         android:layout_marginBottom="48dp"
+        android:background="@drawable/select_eval_button"
         android:text="@string/evaluation_start"
-        android:textStyle="bold"
-        android:textSize="18sp"
         android:textColor="#FFFFFF"
-        android:background="@drawable/shape_round30_solid_primary"
+        android:textSize="16sp"
+        android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@+id/editEval" />
 
     <androidx.core.widget.NestedScrollView
@@ -61,18 +62,18 @@
         android:layout_height="0dp"
         android:layout_marginTop="36dp"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@+id/btnEval"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/btnEval">
 
         <TextView
             android:id="@+id/txtEvalResult"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:padding="16dp"
-            android:textSize="16sp"
             android:textColor="#454545"
+            android:textSize="16sp"
             tools:text="6666666" />
 
     </androidx.core.widget.NestedScrollView>
