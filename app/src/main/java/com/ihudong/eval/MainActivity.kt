@@ -83,6 +83,8 @@ class MainActivity : AppCompatActivity(), OnPahoMsgListener, OnPahoStatusChangeL
     override fun onDestroy() {
         super.onDestroy()
         mDisposable?.dispose()
+        mEvalDisposable?.dispose()
+        mEvaluation?.release()
     }
 
     override fun onClick(v: View?) {
