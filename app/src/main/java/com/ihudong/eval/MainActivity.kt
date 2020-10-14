@@ -1,16 +1,15 @@
 package com.ihudong.eval
 
 import android.Manifest
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import com.pwong.mqtt.OnPahoMsgListener
-import com.pwong.mqtt.OnPahoStatusChangeListener
-import com.pwong.mqtt.PahoHelper
-import com.pwong.mqtt.PahoStatus
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.qdreamer.QLocalEvaluation
+import com.qdreamer.entity.EngSentEvalBean
+import com.qdreamer.entity.EngWordEvalBean
 import com.qdreamer.qvoice.OnEvaluationErrorListener
 import com.qdreamer.qvoice.OnEvaluationInfoListener
 import com.qdreamer.qvoice.OnInitListener
@@ -27,19 +26,21 @@ import java.util.concurrent.TimeUnit
 
 
 @RuntimePermissions
-class MainActivity : AppCompatActivity(), OnPahoMsgListener, OnPahoStatusChangeListener,
-    OnEvaluationErrorListener, OnEvaluationInfoListener, OnInitListener, View.OnClickListener {
+class MainActivity : AppCompatActivity(), View.OnClickListener,
+    OnEvaluationErrorListener, OnEvaluationInfoListener, OnInitListener {
 
     private companion object {
         private const val EVAL_APP_ID = "983f61d6-0103-11ea-b526-00163e13c8a2"
         private const val EVAL_APP_KEY = "36b2e346-07fb-32e3-9d36-bff9a71890b4"
     }
 
-    private lateinit var mPahoHelper: PahoHelper
-
     private var mDisposable: Disposable? = null
 
     private var mEvalDisposable: Disposable? = null
+
+    private val mEvalAdapter: EvalAdapter by lazy {
+        EvalAdapter()
+    }
 
     private val mEvaluation: QLocalEvaluation by lazy {
         QLocalEvaluation(this).apply {
@@ -56,6 +57,9 @@ class MainActivity : AppCompatActivity(), OnPahoMsgListener, OnPahoStatusChangeL
         btnEval?.setOnClickListener(this)
         btnEval?.isEnabled = false
 
+        recycler.layoutManager = LinearLayoutManager(this)
+        recycler.adapter = mEvalAdapter
+
         initEngineWithPermissionCheck()
     }
 
@@ -66,7 +70,6 @@ class MainActivity : AppCompatActivity(), OnPahoMsgListener, OnPahoStatusChangeL
         }.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe {
-
                 }
     }
 
@@ -84,7 +87,7 @@ class MainActivity : AppCompatActivity(), OnPahoMsgListener, OnPahoStatusChangeL
         super.onDestroy()
         mDisposable?.dispose()
         mEvalDisposable?.dispose()
-        mEvaluation?.release()
+        mEvaluation.release()
     }
 
     override fun onClick(v: View?) {
@@ -95,7 +98,7 @@ class MainActivity : AppCompatActivity(), OnPahoMsgListener, OnPahoStatusChangeL
                     Toast.makeText(this, "请先输入要评测的文本", Toast.LENGTH_SHORT).show()
                 } else {
                     v.isEnabled = false
-                    txtEvalResult?.text = ""
+                    mEvalAdapter.clearList()
                     mEvaluation.startEvaluation(content)
                     startEvaluationDownTimer(if (content.contains(" ")) 6 else 3)
                 }
@@ -114,29 +117,6 @@ class MainActivity : AppCompatActivity(), OnPahoMsgListener, OnPahoStatusChangeL
                     mEvaluation.stopEvaluation()
                     btnEval?.isEnabled = true
                 })
-    }
-
-    /**
-     * MQTT 通信连接状态改变回调
-     */
-    override fun onChange(state: PahoStatus, throwable: Throwable?) {
-
-    }
-
-    /**
-     * 接收到的 MQTT 订阅消息
-     * [topic] 订阅的 MQTT 主题
-     * [message] 收到的 MQTT 消息
-     */
-    override fun onSubMessage(topic: String, message: String) {
-
-    }
-
-    /**
-     * MQTT 发送消息成功回调
-     */
-    override fun onPubMessage(message: String) {
-
     }
 
     /**
@@ -170,15 +150,34 @@ class MainActivity : AppCompatActivity(), OnPahoMsgListener, OnPahoStatusChangeL
      * 句子评测结果解析为 com.qdreamer.entity.EngSentEvalBean
      */
     override fun onEvalResult(isWord: Boolean, evalResult: String?) {
-        Log.i("Evaluation", "onEvalResult >>> $isWord  >>>> $evalResult")
-        txtEvalResult?.text = if (evalResult.isNullOrEmpty()) {
-            "无评测结果"
+        Log.i("Evaluation", "onEvalResult >>> $isWord  >>>> $evalResult >>>> ${Thread.currentThread().name}")
+        if (evalResult.isNullOrEmpty()) {
+            Toast.makeText(this, "无评测结果", Toast.LENGTH_LONG).show()
         } else {
-            val total = JsonHelper.getJsonString(evalResult, "total")
-            if (total.isNotEmpty()) {
-                Toast.makeText(this, total, Toast.LENGTH_LONG).show()
+            mEvalAdapter.clearList()
+            if (isWord) {
+                val evalBean = JsonHelper.fromJson(evalResult, EngWordEvalBean::class.java)
+                Toast.makeText(this, "${evalBean.total}", Toast.LENGTH_LONG).show()
+                if (!evalBean.scores.isNullOrEmpty()) {
+                    val scoreBean = evalBean.scores[0]
+                    mEvalAdapter.addEvalTxtScore(EvalTxtScore(scoreBean.charX, scoreBean.score))
+                    if (!scoreBean.phone.isNullOrEmpty()) {
+                        val list = scoreBean.phone.map {
+                            EvalTxtScore(it.charX, it.score)
+                        }
+                        mEvalAdapter.addEvalTxtScore(list)
+                    }
+                }
+            } else {
+                val evalBean = JsonHelper.fromJson(evalResult, EngSentEvalBean::class.java)
+                Toast.makeText(this, "${evalBean.total}", Toast.LENGTH_LONG).show()
+                mEvalAdapter.addEvalTxtScore(EvalTxtScore(evalBean.sentence, evalBean.total))
+                evalBean.scores?.map {
+                    EvalTxtScore(it.charX, it.score)
+                }?.let {
+                    mEvalAdapter.addEvalTxtScore(it)
+                }
             }
-            evalResult
         }
     }
 
